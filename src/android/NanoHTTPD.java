@@ -428,7 +428,7 @@ public class NanoHTTPD
 				// Create a BufferedReader for easily reading it as string.
 				ByteArrayInputStream bin = new ByteArrayInputStream(fbuf);
 				BufferedReader in = new BufferedReader( new InputStreamReader(bin));
-
+				delayCallback.success("This is the awesome data." );
 				// If the method is POST, there may be parameters
 				// in data section, too, read it:
 				if ( method.equalsIgnoreCase( "POST" ))
