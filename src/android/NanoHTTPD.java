@@ -24,6 +24,7 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
+import org.apache.cordova.CallbackContext;
 
 import android.util.Log;
 
@@ -74,7 +75,7 @@ import android.util.Log;
 public class NanoHTTPD
 {
 	private final String LOGTAG = "NanoHTTPD";
-	
+
 	// ==================================================
 	// API parts
 	// ==================================================
@@ -101,14 +102,14 @@ public class NanoHTTPD
 			String value = (String)e.nextElement();
 			Log.i( LOGTAG, "  HDR: '" + value + "' = '" + header.getProperty( value ) + "'" );
 		}
-		
+
 		e = parms.propertyNames();
 		while ( e.hasMoreElements())
 		{
 			String value = (String)e.nextElement();
 			Log.i( LOGTAG, "  PRM: '" + value + "' = '" + parms.getProperty( value ) + "'" );
 		}
-		
+
 		e = files.propertyNames();
 		while ( e.hasMoreElements())
 		{
@@ -223,8 +224,10 @@ public class NanoHTTPD
 	 * Starts a HTTP server to given port.<p>
 	 * Throws an IOException if the socket is already in use
 	 */
-	public NanoHTTPD(InetSocketAddress localAddr, AndroidFile wwwroot) throws IOException
+	 CallbackContext delayCallback;
+	public NanoHTTPD(InetSocketAddress localAddr, AndroidFile wwwroot,CallbackContext delayCallback) throws IOException
 	{
+	this.delayCallback = delayCallback;
 		myTcpPort = localAddr.getPort();
 		myRootDir = wwwroot;
 		myServerSocket = new ServerSocket();
@@ -245,13 +248,14 @@ public class NanoHTTPD
 		myThread.setDaemon( true );
 		myThread.start();
 	}
-	
+
 	/**
 	 * Starts a HTTP server to given port.<p>
 	 * Throws an IOException if the socket is already in use
 	 */
-	public NanoHTTPD( int port, AndroidFile wwwroot ) throws IOException
+	public NanoHTTPD( int port, AndroidFile wwwroot,CallbackContext delayCallback ) throws IOException
 	{
+	this.delayCallback = delayCallback;
 		myTcpPort = port;
 		this.myRootDir = wwwroot;
 		myServerSocket = new ServerSocket( myTcpPort );
@@ -294,7 +298,7 @@ public class NanoHTTPD
 	{
 		PrintStream myOut = System.out;
 		PrintStream myErr = System.err;
-		
+
 		myOut.println( "NanoHTTPD 1.25 (C) 2001,2005-2011 Jarno Elonen and (C) 2010 Konstantinos Togias\n" +
 				"(Command line options: [-p port] [-d root-dir] [--licence])\n" );
 
@@ -316,7 +320,7 @@ public class NanoHTTPD
 
 		try
 		{
-			new NanoHTTPD( port, new AndroidFile(wwwroot.getPath()) );
+			new NanoHTTPD( port, new AndroidFile(wwwroot.getPath()) ,null);
 		}
 		catch( IOException ioe )
 		{
@@ -900,7 +904,7 @@ public class NanoHTTPD
 			boolean allowDirectoryListing )
 	{
 		Response res = null;
-		
+
 		// Make sure we won't die of an exception later
 		if ( !homeDir.isDirectory())
 			res = new Response( HTTP_INTERNALERROR, MIME_PLAINTEXT,
@@ -940,7 +944,7 @@ public class NanoHTTPD
 
 			if ( res == null )
 			{
-				// First try index.html and index.htm 
+				// First try index.html and index.htm
 				if ( new AndroidFile( f, "index.html" ).exists())
 					f = new AndroidFile( homeDir, uri + "/index.html" );
 				else if ( new AndroidFile( f, "index.htm" ).exists())
@@ -1017,7 +1021,7 @@ public class NanoHTTPD
 
 				// Calculate etag
 				String etag = Integer.toHexString((f.getAbsolutePath() + f.lastModified() + "" + f.length()).hashCode());
-				
+
 				//System.out.println( String.format("mime: %s, etag: %s", mime, etag));
 
 				// Support (simple) skipping:
@@ -1044,7 +1048,7 @@ public class NanoHTTPD
 				// Change return code and add Content-Range header when skipping is requested
 				long fileLen = f.length();
 				//System.out.println( String.format("file length: %d", fileLen));
-				
+
 				if (range != null && startFrom >= 0)
 				{
 					if ( startFrom >= fileLen)
@@ -1133,7 +1137,7 @@ public class NanoHTTPD
 	}
 
 	private static int theBufferSize = 16 * 1024;
-	
+
 	/**
 	 * GMT date formatter
 	 */
